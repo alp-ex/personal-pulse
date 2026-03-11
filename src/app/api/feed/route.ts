@@ -5,7 +5,7 @@ import { fetchData } from "@/lib/fetchers/data";
 import { fetchBooks } from "@/lib/fetchers/books";
 import { fetchSocial } from "@/lib/fetchers/social";
 import { fetchForums } from "@/lib/fetchers/forums";
-import { fetchListings } from "@/lib/fetchers/listings";
+import { fetchLeboncoin } from "@/lib/fetchers/leboncoin";
 import { fetchRentData } from "@/lib/fetchers/rent-data";
 import { mixFeed } from "@/lib/mixer";
 import type { FeedItem, FeedResponse } from "@/lib/types";
@@ -40,12 +40,6 @@ import {
   FINANCE_BLUESKY,
   FINANCE_BOOKS,
   FINANCE_INDICATORS,
-  // Rent
-  RENT_FEEDS,
-  RENT_SUBREDDITS,
-  RENT_BLUESKY,
-  RENT_BOOKS,
-  RENT_PLATFORMS,
 } from "@/lib/constants";
 
 export const revalidate = 600;
@@ -108,14 +102,10 @@ function getFetchers(tab: string): { fetchers: FetcherFn[]; names: string[] } {
     case "rent":
       return {
         fetchers: [
-          () => fetchListings(RENT_PLATFORMS),
+          () => fetchLeboncoin(),
           () => fetchRentData(),
-          () => fetchNews(RENT_FEEDS),
-          () => fetchReddit(RENT_SUBREDDITS),
-          () => fetchSocial(RENT_BLUESKY),
-          () => fetchBooks(RENT_BOOKS),
         ],
-        names: ["rent-listings", "rent-data", "rent-news", "rent-reddit", "rent-social", "rent-books"],
+        names: ["rent-leboncoin", "rent-data"],
       };
 
     case "world":
