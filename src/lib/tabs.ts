@@ -7,6 +7,12 @@ export interface Tab {
 
 export const TABS: Tab[] = [
   {
+    id: "briefing",
+    label: "Briefing",
+    emoji: "☀️",
+    description: "Your morning brief — top picks across all topics",
+  },
+  {
     id: "world",
     label: "World",
     emoji: "🌍",
@@ -28,12 +34,24 @@ export const TABS: Tab[] = [
     id: "hustle",
     label: "Hustle",
     emoji: "🚀",
-    description: "Freelancing & business",
+    description: "Freelancing, products & business",
   },
   {
     id: "finance",
     label: "Finance",
     emoji: "💰",
     description: "Family finances & money",
+  },
+  {
+    id: "rent",
+    label: "Rent",
+    emoji: "🏠",
+    description: "Apartment hunting in Montmartre — find your next home",
+  },
+  {
+    id: "saved",
+    label: "Saved",
+    emoji: "🔖",
+    description: "Your bookmarked items",
   },
 ];

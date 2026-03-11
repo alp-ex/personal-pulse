@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { FeedItem, FeedResponse } from "@/lib/types";
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { NewsCard } from "./cards/NewsCard";
 import { RedditCard } from "./cards/RedditCard";
 import { DataCard } from "./cards/DataCard";
 import { BookCard } from "./cards/BookCard";
 import { SocialCard } from "./cards/SocialCard";
 import { ForumCard } from "./cards/ForumCard";
+import { ListingCard } from "./cards/ListingCard";
 
 function CardSkeleton() {
   return (
@@ -23,25 +25,6 @@ function CardSkeleton() {
   );
 }
 
-function renderCard(item: FeedItem) {
-  switch (item.type) {
-    case "news":
-      return <NewsCard key={item.id} item={item} />;
-    case "reddit":
-      return <RedditCard key={item.id} item={item} />;
-    case "data":
-      return <DataCard key={item.id} item={item} />;
-    case "book":
-      return <BookCard key={item.id} item={item} />;
-    case "social":
-      return <SocialCard key={item.id} item={item} />;
-    case "forum":
-      return <ForumCard key={item.id} item={item} />;
-    default:
-      return null;
-  }
-}
-
 interface FeedContainerProps {
   tab: string;
 }
@@ -53,6 +36,7 @@ export function FeedContainer({ tab }: FeedContainerProps) {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { bookmarks, toggle, isBookmarked } = useBookmarks();
 
   const fetchPage = useCallback(
     async (pageNum: number) => {
@@ -63,8 +47,13 @@ export function FeedContainer({ tab }: FeedContainerProps) {
     [tab]
   );
 
-  // Reset and reload when tab changes
+  // Reset and reload when tab changes (skip for "saved" tab)
   useEffect(() => {
+    if (tab === "saved") {
+      setLoading(false);
+      return;
+    }
+
     setItems([]);
     setPage(1);
     setHasMore(true);
@@ -81,7 +70,7 @@ export function FeedContainer({ tab }: FeedContainerProps) {
         setError(err.message);
         setLoading(false);
       });
-  }, [fetchPage]);
+  }, [fetchPage, tab]);
 
   async function loadMore() {
     const nextPage = page + 1;
@@ -95,6 +84,51 @@ export function FeedContainer({ tab }: FeedContainerProps) {
       // silently fail — user can try again
     }
     setLoadingMore(false);
+  }
+
+  function renderCard(item: FeedItem) {
+    const bm = isBookmarked(item.id);
+    const onBm = () => toggle(item);
+
+    switch (item.type) {
+      case "news":
+        return <NewsCard key={item.id} item={item} bookmarked={bm} onBookmark={onBm} />;
+      case "reddit":
+        return <RedditCard key={item.id} item={item} bookmarked={bm} onBookmark={onBm} />;
+      case "data":
+        return <DataCard key={item.id} item={item} bookmarked={bm} onBookmark={onBm} />;
+      case "book":
+        return <BookCard key={item.id} item={item} bookmarked={bm} onBookmark={onBm} />;
+      case "social":
+        return <SocialCard key={item.id} item={item} bookmarked={bm} onBookmark={onBm} />;
+      case "forum":
+        return <ForumCard key={item.id} item={item} bookmarked={bm} onBookmark={onBm} />;
+      case "listing":
+        return <ListingCard key={item.id} item={item} bookmarked={bm} onBookmark={onBm} />;
+      default:
+        return null;
+    }
+  }
+
+  // Saved tab — show bookmarks from localStorage
+  if (tab === "saved") {
+    if (bookmarks.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <p className="text-slate-500 dark:text-slate-400 mb-2">
+            No saved items yet.
+          </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            Click the bookmark icon on any card to save it here.
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col gap-4">
+        {bookmarks.map(renderCard)}
+      </div>
+    );
   }
 
   if (loading) {
@@ -143,7 +177,7 @@ export function FeedContainer({ tab }: FeedContainerProps) {
           disabled={loadingMore}
           className="mx-auto px-6 py-3 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 my-4"
         >
-          {loadingMore ? "Loading…" : "Load more"}
+          {loadingMore ? "Loading..." : "Load more"}
         </button>
       )}
     </div>

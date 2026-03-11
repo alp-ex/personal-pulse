@@ -4,7 +4,8 @@ export type FeedItemType =
   | "book"
   | "reddit"
   | "social"
-  | "forum";
+  | "forum"
+  | "listing";
 
 export interface FeedItem {
   id: string;
@@ -23,6 +24,11 @@ export interface FeedItem {
     dataPoints?: Array<{ year: number; value: number }>;
     indicatorName?: string;
     latestValue?: string;
+    // Rent listing fields
+    price?: string;
+    area?: string;
+    rooms?: string;
+    platform?: string;
   };
 }
 

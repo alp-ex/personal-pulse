@@ -6,7 +6,7 @@ import { FeedContainer } from "@/components/FeedContainer";
 import { TABS } from "@/lib/tabs";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("world");
+  const [activeTab, setActiveTab] = useState("briefing");
   const currentTab = TABS.find((t) => t.id === activeTab)!;
 
   return (

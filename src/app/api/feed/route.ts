@@ -5,6 +5,8 @@ import { fetchData } from "@/lib/fetchers/data";
 import { fetchBooks } from "@/lib/fetchers/books";
 import { fetchSocial } from "@/lib/fetchers/social";
 import { fetchForums } from "@/lib/fetchers/forums";
+import { fetchListings } from "@/lib/fetchers/listings";
+import { fetchRentData } from "@/lib/fetchers/rent-data";
 import { mixFeed } from "@/lib/mixer";
 import type { FeedItem, FeedResponse } from "@/lib/types";
 import {
@@ -38,13 +40,19 @@ import {
   FINANCE_BLUESKY,
   FINANCE_BOOKS,
   FINANCE_INDICATORS,
+  // Rent
+  RENT_FEEDS,
+  RENT_SUBREDDITS,
+  RENT_BLUESKY,
+  RENT_BOOKS,
+  RENT_PLATFORMS,
 } from "@/lib/constants";
 
 export const revalidate = 600;
 
 const PAGE_SIZE = 15;
 
-type FetcherFn = () => Promise<FeedItem[]>;
+type FetcherFn = () => Promise<FeedItem[]> | FeedItem[];
 
 function getFetchers(tab: string): { fetchers: FetcherFn[]; names: string[] } {
   switch (tab) {
@@ -80,8 +88,9 @@ function getFetchers(tab: string): { fetchers: FetcherFn[]; names: string[] } {
           () => fetchReddit(HUSTLE_SUBREDDITS),
           () => fetchSocial(HUSTLE_BLUESKY),
           () => fetchBooks(HUSTLE_BOOKS),
+          () => fetchForums(),
         ],
-        names: ["hustle-news", "hustle-reddit", "hustle-social", "hustle-books"],
+        names: ["hustle-news", "hustle-reddit", "hustle-social", "hustle-books", "hustle-forums"],
       };
 
     case "finance":
@@ -94,6 +103,19 @@ function getFetchers(tab: string): { fetchers: FetcherFn[]; names: string[] } {
           () => fetchData(FINANCE_INDICATORS),
         ],
         names: ["finance-news", "finance-reddit", "finance-social", "finance-books", "finance-data"],
+      };
+
+    case "rent":
+      return {
+        fetchers: [
+          () => fetchListings(RENT_PLATFORMS),
+          () => fetchRentData(),
+          () => fetchNews(RENT_FEEDS),
+          () => fetchReddit(RENT_SUBREDDITS),
+          () => fetchSocial(RENT_BLUESKY),
+          () => fetchBooks(RENT_BOOKS),
+        ],
+        names: ["rent-listings", "rent-data", "rent-news", "rent-reddit", "rent-social", "rent-books"],
       };
 
     case "world":
@@ -112,6 +134,49 @@ function getFetchers(tab: string): { fetchers: FetcherFn[]; names: string[] } {
   }
 }
 
+// Briefing: fetch top 2 items from each tab for a quick daily summary
+async function fetchBriefing(): Promise<FeedItem[]> {
+  const tabs = ["world", "tech", "jobs", "hustle", "finance", "rent"];
+  const all: FeedItem[] = [];
+
+  const tabResults = await Promise.allSettled(
+    tabs.map(async (tab) => {
+      const { fetchers, names } = getFetchers(tab);
+      const results = await Promise.allSettled(fetchers.map((fn) => fn()));
+      const items = results
+        .filter(
+          (r): r is PromiseFulfilledResult<FeedItem[]> =>
+            r.status === "fulfilled"
+        )
+        .flatMap((r) => r.value);
+
+      results.forEach((r, i) => {
+        if (r.status === "rejected") {
+          console.warn(`[briefing:${tab}] ${names[i]} failed:`, r.reason);
+        }
+      });
+
+      // Take top 2 items per tab (by score then recency)
+      return items
+        .sort((a, b) => {
+          const scoreA = a.metadata?.score || 0;
+          const scoreB = b.metadata?.score || 0;
+          if (scoreA !== scoreB) return scoreB - scoreA;
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        })
+        .slice(0, 2);
+    })
+  );
+
+  for (const result of tabResults) {
+    if (result.status === "fulfilled") {
+      all.push(...result.value);
+    }
+  }
+
+  return all;
+}
+
 export async function GET(request: NextRequest) {
   const tab = request.nextUrl.searchParams.get("tab") || "world";
   const page = parseInt(
@@ -120,21 +185,27 @@ export async function GET(request: NextRequest) {
   );
 
   try {
-    const { fetchers, names } = getFetchers(tab);
-    const results = await Promise.allSettled(fetchers.map((fn) => fn()));
+    let allItems: FeedItem[];
 
-    const allItems = results
-      .filter(
-        (r): r is PromiseFulfilledResult<FeedItem[]> =>
-          r.status === "fulfilled"
-      )
-      .flatMap((r) => r.value);
+    if (tab === "briefing") {
+      allItems = await fetchBriefing();
+    } else {
+      const { fetchers, names } = getFetchers(tab);
+      const results = await Promise.allSettled(fetchers.map((fn) => fn()));
 
-    results.forEach((r, i) => {
-      if (r.status === "rejected") {
-        console.warn(`[feed:${tab}] ${names[i]} failed:`, r.reason);
-      }
-    });
+      allItems = results
+        .filter(
+          (r): r is PromiseFulfilledResult<FeedItem[]> =>
+            r.status === "fulfilled"
+        )
+        .flatMap((r) => r.value);
+
+      results.forEach((r, i) => {
+        if (r.status === "rejected") {
+          console.warn(`[feed:${tab}] ${names[i]} failed:`, r.reason);
+        }
+      });
+    }
 
     const mixed = mixFeed(allItems);
 

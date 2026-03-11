@@ -137,11 +137,13 @@ export const HUSTLE_SUBREDDITS = [
   "smallbusiness",
   "SideProject",
   "startups",
+  "SaaS",
 ];
 
 export const HUSTLE_FEEDS = [
   { name: "Indie Hackers", url: "https://www.indiehackers.com/feed.xml" },
   { name: "Seth Godin", url: "https://feeds.feedblitz.com/sethsblog" },
+  { name: "Product Hunt", url: "https://www.producthunt.com/feed" },
 ];
 
 export const HUSTLE_BLUESKY = [
@@ -149,6 +151,7 @@ export const HUSTLE_BLUESKY = [
   "indie hacker",
   "side project",
   "startup launch",
+  "product hunt",
 ];
 
 export const HUSTLE_BOOKS = [
@@ -195,4 +198,71 @@ export const FINANCE_INDICATORS = [
   { code: "FP.CPI.TOTL.ZG", name: "Inflation Rate (%)", country: "WLD" },
   { code: "FR.INR.RINR", name: "Real Interest Rate (%)", country: "USA" },
   { code: "NY.GNP.PCAP.CD", name: "GNI Per Capita (US$)", country: "WLD" },
+];
+
+// ============================================
+// RENT TAB (Apartment Hunting — Montmartre)
+// ============================================
+
+export const RENT_SUBREDDITS = [
+  "paris",
+  "AskFrance",
+  "france",
+];
+
+export const RENT_FEEDS = [
+  { name: "SeLoger Blog", url: "https://www.seloger.com/rss.xml" },
+];
+
+export const RENT_BLUESKY = [
+  "appartement paris",
+  "location montmartre",
+  "immobilier paris",
+];
+
+export const RENT_BOOKS = [
+  "droits locataire france",
+  "trouver appartement paris",
+  "renting housing guide",
+];
+
+// Search platforms with pre-filtered URLs for Montmartre (Paris 18e)
+// 3 people = need T2 or T3, budget ~1400-1600€, 40m²+
+export const RENT_PLATFORMS = [
+  {
+    name: "LeBonCoin",
+    description: "Largest classifieds site — many private landlords post here directly",
+    searchUrl: "https://www.leboncoin.fr/recherche?category=10&locations=Paris+18e+75018&real_estate_type=2&price=max-1600&rooms=2-3&square=40-max",
+    filters: "Paris 18e, 2-3 rooms, max 1600€, 40m²+",
+  },
+  {
+    name: "SeLoger",
+    description: "Major real estate portal — detailed filters and agency listings",
+    searchUrl: "https://www.seloger.com/immobilier/locations/immo-paris-18eme-75/bien-appartement/",
+    filters: "Paris 18e, 2-3 rooms, max 1600€, 40m²+",
+  },
+  {
+    name: "PAP.fr",
+    description: "Private owner listings — no agency fees, direct contact",
+    searchUrl: "https://www.pap.fr/annonce/locations-appartement-paris-18e-g37788-jusqu-a-1600-euros-a-partir-de-40-m2",
+    filters: "Paris 18e, max 1600€, 40m²+",
+  },
+  {
+    name: "Bien'ici",
+    description: "Map-based search — great for seeing what's around Montmartre",
+    searchUrl: "https://www.bienici.com/recherche/location/paris-18eme-75018",
+    filters: "Paris 18e, 2+ rooms, max 1600€, 40m²+",
+  },
+  {
+    name: "Jinka",
+    description: "Aggregator — collects listings from multiple sites, sends email alerts",
+    searchUrl: "https://www.jinka.fr/",
+    filters: "Set up alerts for Paris 18e, T2-T3, max 1600€",
+  },
+  {
+    name: "LocService",
+    description: "Reverse search — create your profile and landlords contact you",
+    searchUrl: "https://www.locservice.fr/",
+    filters: "Create a tenant profile, landlords reach out",
+  },
 ];
