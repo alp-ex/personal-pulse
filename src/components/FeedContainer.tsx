@@ -25,6 +25,128 @@ function CardSkeleton() {
   );
 }
 
+// --- Rent filters ---
+
+const RENT_STORAGE_KEY = "personal-pulse-rent-filters";
+
+interface RentFilters {
+  priceMin: number;
+  priceMax: number;
+  squareMin: number;
+  roomsMin: number;
+  roomsMax: number;
+}
+
+const DEFAULTS: RentFilters = {
+  priceMin: 800,
+  priceMax: 1600,
+  squareMin: 35,
+  roomsMin: 2,
+  roomsMax: 3,
+};
+
+function loadRentFilters(): RentFilters {
+  if (typeof window === "undefined") return DEFAULTS;
+  try {
+    const raw = localStorage.getItem(RENT_STORAGE_KEY);
+    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
+  } catch {
+    return DEFAULTS;
+  }
+}
+
+function saveRentFilters(f: RentFilters) {
+  try {
+    localStorage.setItem(RENT_STORAGE_KEY, JSON.stringify(f));
+  } catch { /* ignore */ }
+}
+
+function RentFilterBar({
+  filters,
+  onChange,
+  onSearch,
+}: {
+  filters: RentFilters;
+  onChange: (f: RentFilters) => void;
+  onSearch: () => void;
+}) {
+  const update = (partial: Partial<RentFilters>) => {
+    onChange({ ...filters, ...partial });
+  };
+
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 mb-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400">Budget min</span>
+          <input
+            type="number"
+            step={50}
+            min={0}
+            value={filters.priceMin}
+            onChange={(e) => update({ priceMin: Number(e.target.value) })}
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400">Budget max</span>
+          <input
+            type="number"
+            step={50}
+            min={0}
+            value={filters.priceMax}
+            onChange={(e) => update({ priceMax: Number(e.target.value) })}
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400">Surface min (m²)</span>
+          <input
+            type="number"
+            step={5}
+            min={0}
+            value={filters.squareMin}
+            onChange={(e) => update({ squareMin: Number(e.target.value) })}
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400">Pièces min</span>
+          <input
+            type="number"
+            min={1}
+            max={6}
+            value={filters.roomsMin}
+            onChange={(e) => update({ roomsMin: Number(e.target.value) })}
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400">Pièces max</span>
+          <input
+            type="number"
+            min={1}
+            max={6}
+            value={filters.roomsMax}
+            onChange={(e) => update({ roomsMax: Number(e.target.value) })}
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-sm"
+          />
+        </label>
+        <div className="flex items-end">
+          <button
+            onClick={onSearch}
+            className="w-full px-4 py-1.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Rechercher
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Main component ---
+
 interface FeedContainerProps {
   tab: string;
 }
@@ -38,45 +160,77 @@ export function FeedContainer({ tab }: FeedContainerProps) {
   const [error, setError] = useState<string | null>(null);
   const { bookmarks, toggle, isBookmarked } = useBookmarks();
 
+  // Rent filters (only used when tab === "rent")
+  const [rentFilters, setRentFilters] = useState<RentFilters>(DEFAULTS);
+  const [appliedFilters, setAppliedFilters] = useState<RentFilters>(DEFAULTS);
+
+  // Load saved filters on mount
+  useEffect(() => {
+    const saved = loadRentFilters();
+    setRentFilters(saved);
+    setAppliedFilters(saved);
+  }, []);
+
   const fetchPage = useCallback(
-    async (pageNum: number) => {
-      const res = await fetch(`/api/feed?tab=${tab}&page=${pageNum}`);
+    async (pageNum: number, filters?: RentFilters) => {
+      let url = `/api/feed?tab=${tab}&page=${pageNum}`;
+      if (tab === "rent" && filters) {
+        url += `&priceMin=${filters.priceMin}&priceMax=${filters.priceMax}&squareMin=${filters.squareMin}&roomsMin=${filters.roomsMin}&roomsMax=${filters.roomsMax}`;
+      }
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to load feed");
       return (await res.json()) as FeedResponse;
     },
     [tab]
   );
 
-  // Reset and reload when tab changes (skip for "saved" tab)
+  // Load feed
+  const loadFeed = useCallback(
+    (filters?: RentFilters) => {
+      if (tab === "saved") {
+        setLoading(false);
+        return;
+      }
+
+      setItems([]);
+      setPage(1);
+      setHasMore(true);
+      setLoading(true);
+      setError(null);
+
+      const f = tab === "rent" ? (filters || appliedFilters) : undefined;
+
+      fetchPage(1, f)
+        .then((data) => {
+          setItems(data.items);
+          setHasMore(data.hasMore);
+          setLoading(false);
+        })
+        .catch((err) => {
+          setError(err.message);
+          setLoading(false);
+        });
+    },
+    [fetchPage, tab, appliedFilters]
+  );
+
+  // Reload when tab changes
   useEffect(() => {
-    if (tab === "saved") {
-      setLoading(false);
-      return;
-    }
+    loadFeed();
+  }, [loadFeed]);
 
-    setItems([]);
-    setPage(1);
-    setHasMore(true);
-    setLoading(true);
-    setError(null);
-
-    fetchPage(1)
-      .then((data) => {
-        setItems(data.items);
-        setHasMore(data.hasMore);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [fetchPage, tab]);
+  function handleRentSearch() {
+    saveRentFilters(rentFilters);
+    setAppliedFilters(rentFilters);
+    loadFeed(rentFilters);
+  }
 
   async function loadMore() {
     const nextPage = page + 1;
     setLoadingMore(true);
     try {
-      const data = await fetchPage(nextPage);
+      const f = tab === "rent" ? appliedFilters : undefined;
+      const data = await fetchPage(nextPage, f);
       setItems((prev) => [...prev, ...data.items]);
       setHasMore(data.hasMore);
       setPage(nextPage);
@@ -131,54 +285,49 @@ export function FeedContainer({ tab }: FeedContainerProps) {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <CardSkeleton key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-slate-500 dark:text-slate-400 mb-4">
-          Something went wrong loading the feed.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          Try again
-        </button>
-      </div>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-slate-500 dark:text-slate-400">
-          No content available right now. Check back soon.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-4">
-      {items.map(renderCard)}
+      {tab === "rent" && (
+        <RentFilterBar
+          filters={rentFilters}
+          onChange={setRentFilters}
+          onSearch={handleRentSearch}
+        />
+      )}
 
-      {hasMore && (
-        <button
-          onClick={loadMore}
-          disabled={loadingMore}
-          className="mx-auto px-6 py-3 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 my-4"
-        >
-          {loadingMore ? "Loading..." : "Load more"}
-        </button>
+      {loading ? (
+        Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-slate-500 dark:text-slate-400 mb-4">
+            Something went wrong loading the feed.
+          </p>
+          <button
+            onClick={() => loadFeed()}
+            className="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Try again
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-slate-500 dark:text-slate-400">
+            No content available right now. Check back soon.
+          </p>
+        </div>
+      ) : (
+        <>
+          {items.map(renderCard)}
+          {hasMore && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="mx-auto px-6 py-3 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 my-4"
+            >
+              {loadingMore ? "Loading..." : "Load more"}
+            </button>
+          )}
+        </>
       )}
     </div>
   );

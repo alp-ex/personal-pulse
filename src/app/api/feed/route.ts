@@ -5,7 +5,7 @@ import { fetchData } from "@/lib/fetchers/data";
 import { fetchBooks } from "@/lib/fetchers/books";
 import { fetchSocial } from "@/lib/fetchers/social";
 import { fetchForums } from "@/lib/fetchers/forums";
-import { fetchLeboncoin } from "@/lib/fetchers/leboncoin";
+import { fetchLeboncoin, DEFAULT_RENT_FILTERS } from "@/lib/fetchers/leboncoin";
 import { fetchRentData } from "@/lib/fetchers/rent-data";
 import { mixFeed } from "@/lib/mixer";
 import type { FeedItem, FeedResponse } from "@/lib/types";
@@ -48,7 +48,7 @@ const PAGE_SIZE = 15;
 
 type FetcherFn = () => Promise<FeedItem[]> | FeedItem[];
 
-function getFetchers(tab: string): { fetchers: FetcherFn[]; names: string[] } {
+function getFetchers(tab: string, searchParams?: URLSearchParams): { fetchers: FetcherFn[]; names: string[] } {
   switch (tab) {
     case "tech":
       return {
@@ -99,14 +99,23 @@ function getFetchers(tab: string): { fetchers: FetcherFn[]; names: string[] } {
         names: ["finance-news", "finance-reddit", "finance-social", "finance-books", "finance-data"],
       };
 
-    case "rent":
+    case "rent": {
+      const p = searchParams;
+      const filters = {
+        priceMin: Number(p?.get("priceMin")) || DEFAULT_RENT_FILTERS.priceMin,
+        priceMax: Number(p?.get("priceMax")) || DEFAULT_RENT_FILTERS.priceMax,
+        squareMin: Number(p?.get("squareMin")) || DEFAULT_RENT_FILTERS.squareMin,
+        roomsMin: Number(p?.get("roomsMin")) || DEFAULT_RENT_FILTERS.roomsMin,
+        roomsMax: Number(p?.get("roomsMax")) || DEFAULT_RENT_FILTERS.roomsMax,
+      };
       return {
         fetchers: [
-          () => fetchLeboncoin(),
+          () => fetchLeboncoin(filters),
           () => fetchRentData(),
         ],
         names: ["rent-leboncoin", "rent-data"],
       };
+    }
 
     case "world":
     default:
@@ -180,7 +189,7 @@ export async function GET(request: NextRequest) {
     if (tab === "briefing") {
       allItems = await fetchBriefing();
     } else {
-      const { fetchers, names } = getFetchers(tab);
+      const { fetchers, names } = getFetchers(tab, request.nextUrl.searchParams);
       const results = await Promise.allSettled(fetchers.map((fn) => fn()));
 
       allItems = results

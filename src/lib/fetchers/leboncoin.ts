@@ -1,8 +1,5 @@
 import type { FeedItem } from "../types";
 
-// LeBonCoin search API — returns real apartment listings
-// Filters: Paris 18e, 2-3 rooms, 35m²+, max 1600€/month
-
 const LEBONCOIN_API = "https://api.leboncoin.fr/finder/search";
 
 interface LBCAttribute {
@@ -30,7 +27,25 @@ interface LBCAd {
   index_date: string;
 }
 
-export async function fetchLeboncoin(): Promise<FeedItem[]> {
+export interface RentFilters {
+  priceMin: number;
+  priceMax: number;
+  squareMin: number;
+  roomsMin: number;
+  roomsMax: number;
+}
+
+export const DEFAULT_RENT_FILTERS: RentFilters = {
+  priceMin: 800,
+  priceMax: 1600,
+  squareMin: 35,
+  roomsMin: 2,
+  roomsMax: 3,
+};
+
+export async function fetchLeboncoin(
+  filters: RentFilters = DEFAULT_RENT_FILTERS
+): Promise<FeedItem[]> {
   const body = {
     limit: 25,
     filters: {
@@ -43,9 +58,9 @@ export async function fetchLeboncoin(): Promise<FeedItem[]> {
         city_zipcodes: [{ zipcode: "75018", city: "Paris" }],
       },
       ranges: {
-        price: { min: 800, max: 1600 },
-        rooms: { min: 2, max: 3 },
-        square: { min: 35 },
+        price: { min: filters.priceMin, max: filters.priceMax },
+        rooms: { min: filters.roomsMin, max: filters.roomsMax },
+        square: { min: filters.squareMin },
       },
     },
     sort_by: "time",
