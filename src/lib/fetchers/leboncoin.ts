@@ -72,6 +72,10 @@ export async function fetchLeboncoin(
     headers: {
       "Content-Type": "application/json",
       api_key: "ba0c2dad52b3ec",
+      "User-Agent":
+        "Dalvik/2.1.0 (Linux; U; Android 12; Pixel 6 Build/SQ3A.220705.003.A1)",
+      Accept: "application/json",
+      "Accept-Language": "fr-FR",
     },
     body: JSON.stringify(body),
     next: { revalidate: 1800 },
