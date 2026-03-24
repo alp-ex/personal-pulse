@@ -1,15 +1,13 @@
 import type { FeedItem } from "@/lib/types";
 import { CardShell } from "../CardShell";
 
-export function NewsCard({ item, bookmarked, onBookmark }: { item: FeedItem; bookmarked?: boolean; onBookmark?: () => void }) {
+export function NewsCard({ item }: { item: FeedItem }) {
   return (
     <CardShell
       type="news"
       source={item.source}
       url={item.url}
       timestamp={item.timestamp}
-      bookmarked={bookmarked}
-      onBookmark={onBookmark}
     >
       <div className="flex gap-3">
         {item.imageUrl && (

@@ -6,15 +6,13 @@ function formatNumber(n: number): string {
   return String(n);
 }
 
-export function RedditCard({ item, bookmarked, onBookmark }: { item: FeedItem; bookmarked?: boolean; onBookmark?: () => void }) {
+export function RedditCard({ item }: { item: FeedItem }) {
   return (
     <CardShell
       type="reddit"
       source={item.source}
       url={item.url}
       timestamp={item.timestamp}
-      bookmarked={bookmarked}
-      onBookmark={onBookmark}
     >
       <h3 className="font-semibold text-sm leading-snug line-clamp-2 mb-2">
         {item.title}

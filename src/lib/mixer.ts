@@ -1,10 +1,6 @@
 import type { FeedItem, FeedItemType } from "./types";
 
-// Pattern defines the order content types appear in the feed.
-// Higher representation = appears more often.
-// Listing appears early so apartment platforms show up first in Rent tab.
 const PATTERN: FeedItemType[] = [
-  "listing",
   "news",
   "reddit",
   "news",
@@ -15,7 +11,6 @@ const PATTERN: FeedItemType[] = [
   "reddit",
   "social",
   "book",
-  "listing",
 ];
 
 export function mixFeed(items: FeedItem[]): FeedItem[] {

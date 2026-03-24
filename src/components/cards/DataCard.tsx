@@ -2,7 +2,7 @@ import type { FeedItem } from "@/lib/types";
 import { CardShell } from "../CardShell";
 import { MiniChart } from "../MiniChart";
 
-export function DataCard({ item, bookmarked, onBookmark }: { item: FeedItem; bookmarked?: boolean; onBookmark?: () => void }) {
+export function DataCard({ item }: { item: FeedItem }) {
   const hasChart = item.metadata?.dataPoints && item.metadata.dataPoints.length > 1;
   const isOWID = item.metadata?.chartUrl;
 
@@ -12,8 +12,6 @@ export function DataCard({ item, bookmarked, onBookmark }: { item: FeedItem; boo
       source={item.source}
       url={item.url}
       timestamp={item.timestamp}
-      bookmarked={bookmarked}
-      onBookmark={onBookmark}
     >
       <h3 className="font-semibold text-sm leading-snug mb-1">
         {item.title}
