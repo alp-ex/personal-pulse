@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { FeedContainer } from "@/components/FeedContainer";
 import { HealthTracker } from "@/components/HealthTracker";
 import { ProjectsGallery } from "@/components/ProjectsGallery";
+import { ThinkingGallery } from "@/components/ThinkingGallery";
 import { TABS } from "@/lib/tabs";
 
 export default function Home() {
@@ -21,6 +22,7 @@ export default function Home() {
         {activeTab === "news" && <FeedContainer />}
         {activeTab === "health" && <HealthTracker />}
         {activeTab === "projects" && <ProjectsGallery />}
+        {activeTab === "thinking" && <ThinkingGallery />}
       </main>
     </div>
   );

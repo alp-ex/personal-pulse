@@ -20,4 +20,9 @@ export const TABS: Tab[] = [
     label: "Projects",
     description: "Your ideas, side projects & things to follow up on",
   },
+  {
+    id: "thinking",
+    label: "Thinking",
+    description: "Deep research sessions — analysis, data, and insights",
+  },
 ];
