@@ -38,6 +38,8 @@ export function TrainingBoard({
   const [highlightSquares, setHighlightSquares] = useState<
     Record<string, React.CSSProperties>
   >({});
+  const [wrongAttempts, setWrongAttempts] = useState(0);
+  const [moveRevealed, setMoveRevealed] = useState(false);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -81,6 +83,8 @@ export function TrainingBoard({
 
         const nextIdx = idx + 1;
         setMoveIndex(nextIdx);
+        setWrongAttempts(0);
+        setMoveRevealed(false);
 
         // Check if training is done
         if (nextIdx >= path.moves.length) {
@@ -181,6 +185,8 @@ export function TrainingBoard({
 
       const nextIdx = moveIndex + 1;
       setMoveIndex(nextIdx);
+      setWrongAttempts(0);
+      setMoveRevealed(false);
 
       timeoutRef.current = setTimeout(() => {
         setHighlightSquares({});
@@ -210,23 +216,39 @@ export function TrainingBoard({
         },
       ]);
 
+      setWrongAttempts((n) => n + 1);
+
       // Show hint feedback
       const hint =
         expectedMove.hint || "That's not quite right. Try another move.";
       setFeedback({ type: "wrong", hint });
-      setHighlightSquares({
-        [targetSquare]: { backgroundColor: "rgba(239, 68, 68, 0.4)" },
-      });
 
-      // The move was wrong, so we don't apply it to the real game
-      // (we tried on a copy). Return false to reject the drop.
-      timeoutRef.current = setTimeout(() => {
-        setHighlightSquares({});
-      }, 1500);
+      // If the move has been revealed, keep the amber highlight on from/to
+      // squares. Otherwise flash the wrong square red and clear after 1.5s.
+      if (!moveRevealed) {
+        setHighlightSquares({
+          [targetSquare]: { backgroundColor: "rgba(239, 68, 68, 0.4)" },
+        });
+        timeoutRef.current = setTimeout(() => {
+          setHighlightSquares({});
+        }, 1500);
+      }
 
       return false;
     }
   }
+
+  // Reveal the correct move: highlight from/to squares in amber
+  const revealMove = () => {
+    if (moveIndex >= path.moves.length) return;
+    const expectedMove = path.moves[moveIndex];
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setMoveRevealed(true);
+    setHighlightSquares({
+      [expectedMove.from]: { backgroundColor: "rgba(251, 191, 36, 0.5)" },
+      [expectedMove.to]: { backgroundColor: "rgba(251, 191, 36, 0.5)" },
+    });
+  };
 
   // Build the move history display
   const playedMoves = path.moves.slice(0, moveIndex);
@@ -323,6 +345,23 @@ export function TrainingBoard({
           <p className="text-sm text-red-600 dark:text-red-400">
             {feedback.hint}
           </p>
+          {moveRevealed && moveIndex < path.moves.length && (
+            <p className="text-sm text-amber-700 dark:text-amber-300 mt-2">
+              The move is{" "}
+              <strong className="font-semibold">
+                {path.moves[moveIndex].san}
+              </strong>
+              . The highlighted squares show where to play.
+            </p>
+          )}
+          {wrongAttempts >= 2 && !moveRevealed && (
+            <button
+              onClick={revealMove}
+              className="mt-3 text-xs font-medium text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 underline underline-offset-2"
+            >
+              Show me the move
+            </button>
+          )}
         </div>
       )}
 
