@@ -65,6 +65,56 @@ export const OPENINGS: Opening[] = [
               "The Najdorf move! This little pawn move prevents Nb5 and Bb5, and prepares a future queenside expansion with ...b5. It's incredibly flexible.",
             hint: "Think about what White's knight on d4 could do next. Which small move prevents annoying jumps and prepares queenside expansion?",
           },
+          // 6. Be3 e5 — English Attack setup
+          { from: "c1", to: "e3", san: "Be3" },
+          {
+            from: "e7",
+            to: "e5",
+            san: "e5",
+            explanation:
+              "A bold reaction to the English Attack! You kick White's knight away from d4 and grab central space. Yes, you leave a backward pawn on d6, but the active piece play you get is worth it.",
+            hint: "White just played Be3 eyeing a kingside attack. But the real target is the knight on d4. How can you challenge it while grabbing central space?",
+          },
+          // 7. Nb3 Be6
+          { from: "d4", to: "b3", san: "Nb3" },
+          {
+            from: "c8",
+            to: "e6",
+            san: "Be6",
+            explanation:
+              "Develop your light-squared bishop to a great square. It eyes White's b3-knight, controls central squares, and keeps an eye on the kingside.",
+            hint: "Your light-squared bishop is still at home. Where can it go to pressure White's queenside and support your center?",
+          },
+          // 8. f3 Be7
+          { from: "f2", to: "f3", san: "f3" },
+          {
+            from: "f8",
+            to: "e7",
+            san: "Be7",
+            explanation:
+              "Develop your dark-squared bishop and prepare to castle. White's f3 hints at a kingside pawn storm, so you need to get your king safe quickly.",
+            hint: "White just played f3, preparing a kingside attack. Which piece still needs to develop so you can castle?",
+          },
+          // 9. Qd2 O-O
+          { from: "d1", to: "d2", san: "Qd2" },
+          {
+            from: "e8",
+            to: "g8",
+            san: "O-O",
+            explanation:
+              "Castle kingside! Your king is safe, your rook is connected. White will castle queenside next — that means opposite-side castling and a race of pawn attacks.",
+            hint: "Your king is still in the center with danger coming. What's the priority before White's attack arrives?",
+          },
+          // 10. O-O-O Nbd7
+          { from: "e1", to: "c1", san: "O-O-O" },
+          {
+            from: "b8",
+            to: "d7",
+            san: "Nbd7",
+            explanation:
+              "Develop your last minor piece. The b8-knight goes to d7 where it supports the coming ...b5 attack and can reroute flexibly. Now your development is complete and you're ready to race on the queenside.",
+            hint: "You've castled — now develop the last sleepy piece. Which knight still needs to come out, and where does it support your queenside counterplay?",
+          },
         ],
       },
       {
