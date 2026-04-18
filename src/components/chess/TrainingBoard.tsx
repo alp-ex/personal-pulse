@@ -29,6 +29,7 @@ export function TrainingBoard({
   onBack,
 }: TrainingBoardProps) {
   const [game, setGame] = useState(new Chess());
+  const gameRef = useRef(game);
   const [moveIndex, setMoveIndex] = useState(0);
   const [mistakes, setMistakes] = useState<MistakeRecord[]>([]);
   const [correctCount, setCorrectCount] = useState(0);
@@ -39,6 +40,11 @@ export function TrainingBoard({
   >({});
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Keep gameRef in sync so callbacks always see the latest game
+  useEffect(() => {
+    gameRef.current = game;
+  }, [game]);
 
   // Count how many moves the user needs to make
   const userMoveCount = path.moves.filter((_, i) => {
@@ -62,14 +68,14 @@ export function TrainingBoard({
     [path]
   );
 
-  // Play opponent move automatically
+  // Play opponent move automatically (uses gameRef to avoid stale closure)
   const playOpponentMove = useCallback(
     (idx: number) => {
       if (idx >= path.moves.length) return;
       const move = path.moves[idx];
 
       timeoutRef.current = setTimeout(() => {
-        const gameCopy = new Chess(game.fen());
+        const gameCopy = new Chess(gameRef.current.fen());
         gameCopy.move({ from: move.from, to: move.to });
         setGame(gameCopy);
 
@@ -92,7 +98,7 @@ export function TrainingBoard({
       }, 600);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [game, path, isUserTurn]
+    [path, isUserTurn]
   );
 
   // Show the appropriate feedback for the user's turn
