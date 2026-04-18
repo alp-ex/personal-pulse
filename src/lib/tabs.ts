@@ -25,4 +25,9 @@ export const TABS: Tab[] = [
     label: "Thinking",
     description: "Deep research sessions — analysis, data, and insights",
   },
+  {
+    id: "chess",
+    label: "Chess",
+    description: "Train chess openings — learn the moves and master the lines",
+  },
 ];
